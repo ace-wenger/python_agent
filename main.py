@@ -3,10 +3,12 @@ import sys
 from google import genai
 from google.genai import types
 from dotenv import load_dotenv
+from functions import call_function
 from functions.get_files_info import schema_get_files_info
 from functions.get_file_content import schema_get_file_content
 from functions.run_python_file import schema_run_python_file
 from functions.write_file import schema_write_file
+from functions.call_function import call_function
 
 available_functions = types.Tool(
     function_declarations = [
@@ -71,7 +73,15 @@ def generate_content(client,messages, verbose):
 
     if len(response.function_calls) >= 1:
         for call in response.function_calls:
-            print(f"Calling funtion: {call.name}({call.args})")
+            call_result = call_function(call)
+
+            if len(call_result.parts) == 0:
+                if call_result.parts[0].function_response == None:
+                    if call_result.parts[0].function_response.response == None:
+                        raise Exception("fatal error")
+
+            if verbose:
+                print(f"-> {call_result.parts[0].function_response.response}")
         
     else:
         print("Response:") 
